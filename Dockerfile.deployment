@@ -21,9 +21,6 @@ WORKDIR /var/www/html
 # Laravelのソースをコンテナにコピー
 COPY . .
 
-# sqlファイルをコピー
-COPY database/init/127_0_0_1.sql /var/www/html/database/seed_sample_data.sql
-
 # Laravel初期設定
 RUN composer install --no-dev --optimize-autoloader \
  && php artisan config:clear \
