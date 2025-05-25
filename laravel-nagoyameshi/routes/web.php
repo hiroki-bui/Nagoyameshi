@@ -25,6 +25,10 @@ use App\Http\Controllers\TermController;
 |
 */
 
+Route::get('/health', function () {
+    return response()->json(['status' => 'ok'], 200);
+});
+
 Route::group(['middleware' => 'guest:admin'], function () {
     Route::get('/', [HomeController::class, 'index'])->name('home');
 
