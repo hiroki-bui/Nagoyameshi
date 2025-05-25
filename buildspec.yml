@@ -114,7 +114,7 @@ phases:
         aws ecs wait tasks-stopped --cluster "$ECS_CLUSTER_NAME" --tasks "$TASK_ARN"
 
         echo "Checking task exit code..."
-        for i in {1..10}; do
+        for i in $(seq 1 10); do
           EXIT_CODE=$(aws ecs describe-tasks \
             --cluster "$ECS_CLUSTER_NAME" \
             --tasks "$TASK_ARN" \
