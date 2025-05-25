@@ -26,7 +26,11 @@ phases:
       - echo Pushing the Docker image...
       - docker push $REPOSITORY_URI:$IMAGE_TAG
 
-      - echo Running migration via ECS exec...
+      - echo Installing session-manager-plugin...
+      - curl "https://s3.amazonaws.com/session-manager-downloads/plugin/latest/linux_64bit/session-manager-plugin.rpm" -o "session-manager-plugin.rpm"
+      - yum install -y session-manager-plugin.rpm
+
+      - echo Running migration via ECS Exec...
       - |
         TASK_ID=$(aws ecs list-tasks \
           --cluster "$ECS_CLUSTER_NAME" \
@@ -37,12 +41,16 @@ phases:
 
         echo "Found task: $TASK_ID"
 
-        aws ecs execute-command \
-          --cluster "$ECS_CLUSTER_NAME" \
-          --task "$TASK_ID" \
-          --container "$CONTAINER_NAME" \
-          --command "php artisan migrate --force" \
-          --interactive
+        if [ "$TASK_ID" = "None" ] || [ -z "$TASK_ID" ]; then
+          echo "No running task found. Skipping migration."
+        else
+          aws ecs execute-command \
+            --cluster "$ECS_CLUSTER_NAME" \
+            --task "$TASK_ID" \
+            --container "$CONTAINER_NAME" \
+            --command "php artisan migrate --force" \
+            --interactive
+        fi
 
       - echo Writing imagedefinitions.json for ECS...
       - printf '[{"name":"%s","imageUri":"%s"}]' "$CONTAINER_NAME" "$REPOSITORY_URI:$IMAGE_TAG" > imagedefinitions.json
