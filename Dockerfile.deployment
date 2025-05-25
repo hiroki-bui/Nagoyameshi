@@ -19,9 +19,7 @@ COPY --from=public.ecr.aws/docker/library/composer:latest /usr/bin/composer /usr
 WORKDIR /var/www/html
 
 # Laravelのソースをコンテナにコピー
-COPY laravel-nagoyameshi/ .
-
-COPY database/init/127_0_0_1.sql /var/www/html/database/init/127_0_0_1.sql
+COPY . .
 
 # Laravel初期設定
 RUN composer install --no-dev --optimize-autoloader \
