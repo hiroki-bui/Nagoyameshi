@@ -26,6 +26,9 @@ phases:
       - echo Pushing the Docker image...
       - docker push $REPOSITORY_URI:$IMAGE_TAG
 
+      - echo Writing imagedefinitions.json for ECS...
+      - printf '[{"name":"%s","imageUri":"%s"}]' "$CONTAINER_NAME" "$REPOSITORY_URI:$IMAGE_TAG" > imagedefinitions.json
+
       - echo Running migration via ECS run-task...
       - |
         TASK_ARN=$(aws ecs run-task \
@@ -57,9 +60,6 @@ phases:
           echo "Migration failed"
           exit 1
         fi
-
-      - echo Writing imagedefinitions.json for ECS...
-      - printf '[{"name":"%s","imageUri":"%s"}]' "$CONTAINER_NAME" "$REPOSITORY_URI:$IMAGE_TAG" > imagedefinitions.json
 
 artifacts:
   files:
