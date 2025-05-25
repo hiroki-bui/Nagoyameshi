@@ -19,7 +19,7 @@ COPY --from=public.ecr.aws/docker/library/composer:latest /usr/bin/composer /usr
 WORKDIR /var/www/html
 
 # Laravelのソースをコンテナにコピー
-COPY . .
+COPY ./laravel-nagoyameshi /var/www/html
 
 # Laravel初期設定
 WORKDIR /var/www/html/laravel-nagoyameshi
