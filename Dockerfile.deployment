@@ -22,6 +22,7 @@ WORKDIR /var/www/html
 COPY . .
 
 # Laravel初期設定
+WORKDIR /var/www/html/laravel-nagoyameshi
 RUN composer install --no-dev --optimize-autoloader \
  && php artisan config:clear \
  && php artisan cache:clear \
