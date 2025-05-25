@@ -6,6 +6,7 @@ RUN apt-get update && apt-get install -y \
     git \
     libzip-dev \
     libpng-dev \
+    default-pdo_mysql-client \
     && docker-php-ext-install pdo pdo_mysql zip bcmath
 
 # Apacheのmod_rewrite有効化
@@ -19,6 +20,9 @@ WORKDIR /var/www/html
 
 # Laravelのソースをコンテナにコピー
 COPY . .
+
+# sqlファイルをコピー
+COPY database/init/127_0_0_1.sql /var/www/html/database/seed_sample_data.sql
 
 # Laravel初期設定
 RUN composer install --no-dev --optimize-autoloader \
