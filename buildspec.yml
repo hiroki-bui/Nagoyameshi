@@ -38,15 +38,96 @@ phases:
           --output text)
 
         echo "Started migration task: $TASK_ARN"
-
         echo "Waiting for task to complete..."
         aws ecs wait tasks-stopped --cluster "$ECS_CLUSTER_NAME" --tasks "$TASK_ARN"
 
-        EXIT_CODE=$(aws ecs describe-tasks \
+        echo "Checking task exit code..."
+        for i in {1..10}; do
+          EXIT_CODE=$(aws ecs describe-tasks \
+            --cluster "$ECS_CLUSTER_NAME" \
+            --tasks "$TASK_ARN" \
+            --query "tasks[0].containers[0].exitCode" \
+            --output text)
+
+          if [ "$EXIT_CODE" != "None" ]; then
+            break
+          fi
+
+          echo "Waiting for exit code... attempt $i"
+          sleep 3
+        done
+
+        echo "Migration task exit code: $EXIT_CODE"
+
+        if [ "$EXIT_CODE" -ne 0 ]; then
+          echo "Migration failed"
+          exit 1
+        fi
+
+      - echo Writing imagedefinitions.json for ECS...
+      - printf '[{"name":"%s","imageUri":"%s"}]' "$CONTAINER_NAME" "$REPOSITORY_URI:$IMAGE_TAG" > imagedefinitions.json
+
+artifacts:
+  files:
+    - imagedefinitions.json
+version: 0.2
+
+env:
+  variables:
+    IMAGE_TAG: latest
+
+phases:
+  pre_build:
+    commands:
+      - echo Logging in to DockerHub...
+      - echo "$DOCKERHUB_PASSWORD" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+      - echo Logging in to Amazon ECR...
+      - aws --version
+      - aws ecr get-login-password --region ap-northeast-1 | docker login --username AWS --password-stdin $REPOSITORY_URI
+
+  build:
+    commands:
+      - echo Build started on `date`
+      - echo Building the Docker image...
+      - docker build -f Dockerfile.deployment -t $REPOSITORY_URI:$IMAGE_TAG .
+      - docker tag $REPOSITORY_URI:$IMAGE_TAG $REPOSITORY_URI:$IMAGE_TAG
+
+  post_build:
+    commands:
+      - echo Build completed on `date`
+      - echo Pushing the Docker image...
+      - docker push $REPOSITORY_URI:$IMAGE_TAG
+
+      - echo Running migration via ECS run-task...
+      - |
+        TASK_ARN=$(aws ecs run-task \
           --cluster "$ECS_CLUSTER_NAME" \
-          --tasks "$TASK_ARN" \
-          --query "tasks[0].containers[0].exitCode" \
+          --launch-type FARGATE \
+          --task-definition "$MIGRATION_TASK_DEFINITION" \
+          --network-configuration "awsvpcConfiguration={subnets=[$SUBNET_ID_1,$SUBNET_ID_2],securityGroups=[$SECURITY_GROUP_ID],assignPublicIp=DISABLED}" \
+          --platform-version LATEST \
+          --query "tasks[0].taskArn" \
           --output text)
+
+        echo "Started migration task: $TASK_ARN"
+        echo "Waiting for task to complete..."
+        aws ecs wait tasks-stopped --cluster "$ECS_CLUSTER_NAME" --tasks "$TASK_ARN"
+
+        echo "Checking task exit code..."
+        for i in {1..10}; do
+          EXIT_CODE=$(aws ecs describe-tasks \
+            --cluster "$ECS_CLUSTER_NAME" \
+            --tasks "$TASK_ARN" \
+            --query "tasks[0].containers[0].exitCode" \
+            --output text)
+
+          if [ "$EXIT_CODE" != "None" ]; then
+            break
+          fi
+
+          echo "Waiting for exit code... attempt $i"
+          sleep 3
+        done
 
         echo "Migration task exit code: $EXIT_CODE"
 
