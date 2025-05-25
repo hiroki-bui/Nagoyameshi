@@ -1,0 +1,39 @@
+FROM php:8.2-apache
+
+# 必要なPHP拡張モジュール
+RUN apt-get update && apt-get install -y \
+    unzip \
+    git \
+    libzip-dev \
+    libpng-dev \
+    && docker-php-ext-install pdo pdo_mysql zip
+
+# Apacheのmod_rewrite有効化
+RUN a2enmod rewrite
+
+# Composerのインストール
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+# 作業ディレクトリ
+WORKDIR /var/www/html
+
+# Laravelのソースをコンテナにコピー
+COPY laravel-nagoyameshi/ .
+
+# Laravel初期設定
+RUN composer install --no-dev --optimize-autoloader \
+ && php artisan config:clear \
+ && php artisan cache:clear \
+ && php artisan view:clear
+
+# Apache用にDocumentRootをpublicに変更
+RUN sed -i 's|/var/www/html|/var/www/html/public|g' /etc/apache2/sites-available/000-default.conf
+
+# パーミッション修正（必要に応じて）
+RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+
+# ポート公開
+EXPOSE 80
+
+# 起動
+CMD ["apache2-foreground"]
