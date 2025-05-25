@@ -1,4 +1,4 @@
-FROM php:8.2-apache
+FROM public.ecr.aws/docker/library/php:8.2-apache
 
 # 必要なPHP拡張モジュール
 RUN apt-get update && apt-get install -y \
@@ -12,7 +12,7 @@ RUN apt-get update && apt-get install -y \
 RUN a2enmod rewrite
 
 # Composerのインストール
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+COPY --from=public.ecr.aws/docker/library/composer:latest /usr/bin/composer /usr/bin/composer
 
 # 作業ディレクトリ
 WORKDIR /var/www/html
