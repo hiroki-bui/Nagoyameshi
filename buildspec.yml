@@ -25,6 +25,25 @@ phases:
       - echo Build completed on `date`
       - echo Pushing the Docker image...
       - docker push $REPOSITORY_URI:$IMAGE_TAG
+
+      - echo Running migration via ECS exec...
+      - |
+        TASK_ID=$(aws ecs list-tasks \
+          --cluster "$ECS_CLUSTER_NAME" \
+          --service-name "$ECS_SERVICE_NAME" \
+          --desired-status RUNNING \
+          --query "taskArns[0]" \
+          --output text)
+
+        echo "Found task: $TASK_ID"
+
+        aws ecs execute-command \
+          --cluster "$ECS_CLUSTER_NAME" \
+          --task "$TASK_ID" \
+          --container "$CONTAINER_NAME" \
+          --command "php artisan migrate --force" \
+          --interactive
+
       - echo Writing imagedefinitions.json for ECS...
       - printf '[{"name":"%s","imageUri":"%s"}]' "$CONTAINER_NAME" "$REPOSITORY_URI:$IMAGE_TAG" > imagedefinitions.json
 
