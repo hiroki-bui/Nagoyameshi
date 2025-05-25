@@ -131,6 +131,11 @@ phases:
 
         echo "Migration task exit code: $EXIT_CODE"
 
+        if ! echo "$EXIT_CODE" | grep -Eq '^[0-9]+$'; then
+          echo "Migration failed: invalid exit code: $EXIT_CODE"
+          exit 1
+        fi
+
         if [ "$EXIT_CODE" -ne 0 ]; then
           echo "Migration failed"
           exit 1
