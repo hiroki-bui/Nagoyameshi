@@ -34,8 +34,6 @@ RUN sed -i 's|/var/www/html|/var/www/html/public|g' /etc/apache2/sites-available
 # パーミッション修正（正しいパスに変更）
 RUN chown -R www-data:www-data storage bootstrap/cache
 
-RUN ls -lah /var/www/html/sql/init
-
 # ポート公開
 EXPOSE 80
 
