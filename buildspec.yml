@@ -1,160 +1,65 @@
 version: 0.2
+
+env:
+  variables:
+    IMAGE_TAG: latest
+
 phases:
   pre_build:
     commands:
+      - echo Logging in to DockerHub...
+      - echo "$DOCKERHUB_PASSWORD" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
       - echo Logging in to Amazon ECR...
+      - aws --version
       - aws ecr get-login-password --region ap-northeast-1 | docker login --username AWS --password-stdin $REPOSITORY_URI
-      - echo Docker Hub login...
-      - echo $DOCKERHUB_PASSWORD | docker login --username $DOCKERHUB_USERNAME --password-stdin
-      - IMAGE_TAG=build-$(echo $CODEBUILD_BUILD_ID | awk -F":" '{print $2}')
-      - echo Build started on `date`
-      
+
   build:
     commands:
       - echo Build started on `date`
-      - echo Building Docker image...
-      - cd $LARAVEL_DIR
-      - docker build -t $REPOSITORY_URI:latest .
-      - docker tag $REPOSITORY_URI:latest $REPOSITORY_URI:$IMAGE_TAG
-      
+      - echo Building the Docker image...
+      - docker build -f Dockerfile.deployment -t $REPOSITORY_URI:$IMAGE_TAG .
+      - docker tag $REPOSITORY_URI:$IMAGE_TAG $REPOSITORY_URI:$IMAGE_TAG
+
   post_build:
     commands:
       - echo Build completed on `date`
-      - echo Pushing Docker image...
-      - docker push $REPOSITORY_URI:latest
+      - echo Pushing the Docker image...
       - docker push $REPOSITORY_URI:$IMAGE_TAG
-      
+
       - echo Writing imagedefinitions.json for ECS...
       - printf '[{"name":"%s","imageUri":"%s"}]' "$CONTAINER_NAME" "$REPOSITORY_URI:$IMAGE_TAG" > imagedefinitions.json
-      
+
       - echo Running migration via ECS run-task...
       - |
-        echo "Debug: Environment variables"
-        echo "ECS_CLUSTER_NAME: $ECS_CLUSTER_NAME"
-        echo "MIGRATION_TASK_DEFINITION: $MIGRATION_TASK_DEFINITION"
-        echo "SUBNET_ID_1: $SUBNET_ID_1"
-        echo "SUBNET_ID_2: $SUBNET_ID_2"
-        echo "SECURITY_GROUP_ID: $SECURITY_GROUP_ID"
-        
-        echo "Starting ECS migration task..."
         TASK_ARN=$(aws ecs run-task \
           --cluster "$ECS_CLUSTER_NAME" \
           --launch-type FARGATE \
           --task-definition "$MIGRATION_TASK_DEFINITION" \
-          --network-configuration "awsvpcConfiguration={subnets=[$SUBNET_ID_1,$SUBNET_ID_2],securityGroups=[$SECURITY_GROUP_ID],assignPublicIp=ENABLED}" \
+          --network-configuration "awsvpcConfiguration={subnets=[$SUBNET_ID_1,$SUBNET_ID_2],securityGroups=[$SECURITY_GROUP_ID],assignPublicIp=DISABLED}" \
           --platform-version LATEST \
           --query "tasks[0].taskArn" \
-          --output text 2>&1)
-        
-        echo "Task ARN result: $TASK_ARN"
-        
-        if [[ "$TASK_ARN" == *"error"* ]] || [[ "$TASK_ARN" == *"Error"* ]] || [ -z "$TASK_ARN" ]; then
-          echo "Failed to start ECS task: $TASK_ARN"
-          exit 1
-        fi
-        
+          --output text)
+
         echo "Started migration task: $TASK_ARN"
-        
-        echo "Waiting for task to complete (max 10 minutes)..."
-        timeout 600 aws ecs wait tasks-stopped --cluster "$ECS_CLUSTER_NAME" --tasks "$TASK_ARN"
-        WAIT_EXIT_CODE=$?
-        
-        if [ $WAIT_EXIT_CODE -eq 124 ]; then
-          echo "Migration task timed out after 10 minutes"
-          exit 1
-        elif [ $WAIT_EXIT_CODE -ne 0 ]; then
-          echo "Error waiting for task to complete"
-          exit 1
-        fi
-        
-        echo "Getting task details..."
-        TASK_DETAILS=$(aws ecs describe-tasks \
+        aws ecs wait tasks-stopped --cluster "$ECS_CLUSTER_NAME" --tasks "$TASK_ARN"
+
+        EXIT_CODE=$(aws ecs describe-tasks \
           --cluster "$ECS_CLUSTER_NAME" \
           --tasks "$TASK_ARN" \
-          --output json)
-        
-        if [ -z "$TASK_DETAILS" ]; then
-          echo "Failed to get task details"
+          --query "tasks[0].containers[0].exitCode" \
+          --output text)
+
+        echo "Migration task exit code: $EXIT_CODE"
+
+        if ! echo "$EXIT_CODE" | grep -Eq '^[0-9]+$'; then
+          echo "Migration failed: invalid exit code: $EXIT_CODE"
           exit 1
         fi
-        
-        echo "Task details:"
-        echo "$TASK_DETAILS" | jq '.'
-        
-        LAST_STATUS=$(echo "$TASK_DETAILS" | jq -r '.tasks[0].lastStatus // "Unknown"')
-        STOP_REASON=$(echo "$TASK_DETAILS" | jq -r '.tasks[0].stoppedReason // "Unknown"')
-        DESIRED_STATUS=$(echo "$TASK_DETAILS" | jq -r '.tasks[0].desiredStatus // "Unknown"')
-        
-        echo "Task Status Information:"
-        echo "  Last Status: $LAST_STATUS"
-        echo "  Desired Status: $DESIRED_STATUS"
-        echo "  Stop Reason: $STOP_REASON"
-        
-        # CloudWatch Logsから最新のログを取得
-        echo "Getting CloudWatch logs..."
-        LOG_GROUP="/ecs/prod-laravel-migration"
-        
-        echo "Waiting 10 seconds for logs to be written..."
-        sleep 10
-        
-        LOG_STREAM=$(aws logs describe-log-streams \
-          --log-group-name "$LOG_GROUP" \
-          --order-by LastEventTime \
-          --descending \
-          --limit 1 \
-          --query 'logStreams[0].logStreamName' \
-          --output text 2>/dev/null || echo "No log stream found")
-        
-        if [ "$LOG_STREAM" != "No log stream found" ] && [ "$LOG_STREAM" != "None" ] && [ -n "$LOG_STREAM" ]; then
-          echo "Log Stream: $LOG_STREAM"
-          echo "================================"
-          echo "Migration Task Logs:"
-          echo "================================"
-          aws logs get-log-events \
-            --log-group-name "$LOG_GROUP" \
-            --log-stream-name "$LOG_STREAM" \
-            --start-from-head \
-            --query 'events[].message' \
-            --output text 2>/dev/null || echo "Could not retrieve logs"
-          echo "================================"
-        else
-          echo "No log stream available or logs not yet written"
-        fi
-        
-        # コンテナの詳細状態をチェック
-        CONTAINER_DETAILS=$(echo "$TASK_DETAILS" | jq -r '.tasks[0].containers[0]')
-        echo "Container details:"
-        echo "$CONTAINER_DETAILS" | jq '.'
-        
-        EXIT_CODE=$(echo "$TASK_DETAILS" | jq -r '.tasks[0].containers[0].exitCode // "None"')
-        CONTAINER_REASON=$(echo "$TASK_DETAILS" | jq -r '.tasks[0].containers[0].reason // "None"')
-        
-        echo "Container Status Information:"
-        echo "  Exit Code: $EXIT_CODE"
-        echo "  Container Reason: $CONTAINER_REASON"
-        
-        # タスクが正常に完了したかチェック
-        if [ "$LAST_STATUS" != "STOPPED" ]; then
-          echo "ERROR: Migration failed - Task did not reach STOPPED status"
-          echo "Current status: $LAST_STATUS"
-          exit 1
-        fi
-        
-        if [ "$EXIT_CODE" = "None" ] || [ "$EXIT_CODE" = "null" ]; then
-          echo "ERROR: Migration failed - No exit code available"
-          echo "This usually indicates the container failed to start or crashed immediately"
-          echo "Stop reason: $STOP_REASON"
-          echo "Container reason: $CONTAINER_REASON"
-          exit 1
-        fi
-        
+
         if [ "$EXIT_CODE" -ne 0 ]; then
-          echo "ERROR: Migration failed with exit code: $EXIT_CODE"
-          echo "Container reason: $CONTAINER_REASON"
+          echo "Migration failed"
           exit 1
         fi
-        
-        echo "SUCCESS: Migration completed successfully with exit code: $EXIT_CODE"
 
 artifacts:
   files:
