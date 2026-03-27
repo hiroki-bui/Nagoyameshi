@@ -24,4 +24,4 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 ENV COMPOSER_ALLOW_SUPERUSER 1
 ENV COMPOSER_HOME /composer
 
-CMD cd /app && composer config allow-plugins.composer/installers true && composer update && php ./artisan serve --host 0.0.0.0 --port=80
+CMD cd /app && composer config allow-plugins.composer/installers true && composer install && php ./artisan serve --host 0.0.0.0 --port=80
