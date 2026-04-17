@@ -47,3 +47,13 @@ resource "aws_security_group" "ecs_sg" {
 
   tags = { Name = "tabelog-ecs-sg" }
 }
+
+# ALB用のセキュリティグループルール（HTTPS許可）
+resource "aws_security_group_rule" "alb_https" {
+  type              = "ingress"
+  from_port         = 443
+  to_port           = 443
+  protocol          = "tcp"
+  cidr_blocks       = ["0.0.0.0/0"] # インターネット全体からのアクセスを許可
+  security_group_id = aws_security_group.alb_sg.id
+}
