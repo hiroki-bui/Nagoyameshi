@@ -22,10 +22,12 @@ resource "aws_lb_target_group" "main" {
 
   health_check {
     path                = "/"
-    healthy_threshold   = 3
-    unhealthy_threshold = 2
-    timeout             = 5
-    interval            = 30
+    protocol            = "HTTP"
+    port                = "80"
+    healthy_threshold   = 2
+    unhealthy_threshold = 5
+    timeout             = 30
+    interval            = 60
     matcher             = "200"
   }
 }
@@ -36,7 +38,7 @@ resource "aws_lb_listener" "https" {
   port              = "443"
   protocol          = "HTTPS"
   ssl_policy        = "ELBSecurityPolicy-2016-08"
-  certificate_arn = aws_acm_certificate_validation.main.certificate_arn
+  certificate_arn   = aws_acm_certificate_validation.main.certificate_arn
 
   default_action {
     type             = "forward"
@@ -60,3 +62,4 @@ resource "aws_lb_listener" "http_redirect" {
     }
   }
 }
+
