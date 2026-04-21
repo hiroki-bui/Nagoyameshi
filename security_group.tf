@@ -57,3 +57,24 @@ resource "aws_security_group_rule" "alb_https" {
   cidr_blocks       = ["0.0.0.0/0"] # インターネット全体からのアクセスを許可
   security_group_id = aws_security_group.alb_sg.id
 }
+
+# RDS用のセキュリティグループ
+resource "aws_security_group" "db_sg" {
+  name   = "tabelog-db-sg"
+  vpc_id = aws_vpc.main.id
+
+  # ECSからの通信を許可
+  ingress {
+    from_port       = 3306
+    to_port         = 3306
+    protocol        = "tcp"
+    security_groups = [aws_security_group.ecs_sg.id]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}

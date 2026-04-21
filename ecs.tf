@@ -17,7 +17,37 @@ resource "aws_ecs_task_definition" "main" {
       name      = "tabelog-container"
       image     = "163053485036.dkr.ecr.ap-northeast-1.amazonaws.com/tabelog-repo:latest"
       essential = true
-
+      environment = [
+        {
+          name  = "APP_KEY"
+          value = "base64:BHUgpqmN22cyp6fF98YCaAgM8Q+uwsm0pOGNGQEU3ok="
+        },
+        {
+          name  = "DB_CONNECTION"
+          value = "mysql" # mysqlに変更
+        },
+        {
+          name  = "DB_HOST"
+          value = aws_db_instance.main.address # 作成したRDSのエンドポイントを自動取得
+        },
+        {
+          name  = "DB_PORT"
+          value = "3306"
+        },
+        {
+          name  = "DB_DATABASE"
+          value = "tabelog_db"
+        },
+        {
+          name  = "DB_USERNAME"
+          value = "admin"
+        },
+        {
+          name  = "DB_PASSWORD"
+          value = "Namu0326"
+        },
+        # ... その他デバッグ用設定 ...
+      ]
       portMappings = [
         {
           containerPort = 80
