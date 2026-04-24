@@ -21,7 +21,7 @@ resource "aws_lb_target_group" "main" {
   target_type = "ip"
 
   health_check {
-    path                = "/"
+    path                = "/health"
     protocol            = "HTTP"
     port                = "80"
     healthy_threshold   = 2
