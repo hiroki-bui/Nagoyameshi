@@ -1,0 +1,4 @@
+# laravel-nagoyameshi/.dockerignore
+
+.env
+.git
