@@ -21,7 +21,7 @@ RUN docker-php-ext-install gd
 RUN docker-php-ext-install bcmath
 RUN docker-php-ext-install pdo_mysql mysqli exif
 
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+COPY --from=public.ecr.aws/composer/composer:latest /usr/bin/composer /usr/bin/composer
 ENV COMPOSER_ALLOW_SUPERUSER 1
 ENV COMPOSER_HOME /composer
 
