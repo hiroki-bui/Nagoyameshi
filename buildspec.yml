@@ -3,25 +3,29 @@ version: 0.2
 phases:
   pre_build:
     commands:
-      - echo Logging in to Amazon ECR...
-      - aws --version
-      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
-      - REPOSITORY_URI=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME
-      - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
-      - IMAGE_TAG=${COMMIT_HASH:=latest}
+      - echo "[PRE_BUILD] Logging in to Amazon ECR..."
+      - aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${REPOSITORY_URI}
+
   build:
     commands:
-      - echo Build started on `date`
-      - echo Building the Docker image...
-      - docker build -t $REPOSITORY_URI:latest .
-      - docker build -t $REPOSITORY_URI:$IMAGE_TAG .
+      - echo "[BUILD] Building Laravel Docker image..."
+      - docker build --no-cache -f Dockerfile.deployment -t ${REPOSITORY_URI}:latest .
+      - docker tag ${REPOSITORY_URI}:latest ${REPOSITORY_URI}:latest
+
   post_build:
     commands:
-      - echo Build completed on `date`
-      - echo Pushing the Docker images...
-      - docker push $REPOSITORY_URI:latest
-      - docker push $REPOSITORY_URI:$IMAGE_TAG
-      - echo Writing image definitions file...
-      - printf '[{"name":"%s","imageUri":"%s"}]' $CONTAINER_NAME $REPOSITORY_URI:$IMAGE_TAG > imagedefinitions.json
+      - echo "[POST_BUILD] Running Laravel migration via ECS RunTask..."
+      - |
+        aws ecs run-task \
+          --cluster ${ECS_CLUSTER_NAME} \
+          --launch-type FARGATE \
+          --task-definition ${MIGRATION_TASK_DEFINITION} \
+          --overrides '{"containerOverrides":[{"name":"Nagoyameshi-dev-app","command":["sh","-c","php artisan migrate --force && php artisan init:db"]}]}' \
+          --network-configuration "awsvpcConfiguration={subnets=[${SUBNET_ID_1},${SUBNET_ID_2}],securityGroups=[${SECURITY_GROUP_ID}],assignPublicIp=DISABLED}" \
+          --region us-east-1
+
+      - echo "[POST_BUILD] Writing imagedefinitions.json for ECS Deploy..."
+      - printf '[{"name":"%s","imageUri":"%s:latest"}]' "$CONTAINER_NAME" "$REPOSITORY_URI" > imagedefinitions.json
 artifacts:
-    files: imagedefinitions.json
+  files:
+    - imagedefinitions.json
