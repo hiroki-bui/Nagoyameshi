@@ -36,7 +36,7 @@ resource "aws_codebuild_project" "tabelog_build" {
     environment_variable {
       name  = "CONTAINER_NAME"
       type  = "PLAINTEXT"
-      value = "Nagoyameshi-dev-app"
+      value = "tabelog-container"
     }
     environment_variable {
       name  = "ECS_CLUSTER_NAME"
