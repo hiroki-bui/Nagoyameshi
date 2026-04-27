@@ -51,7 +51,7 @@ resource "aws_codebuild_project" "tabelog_build" {
     environment_variable {
       name  = "MIGRATION_TASK_DEFINITION"
       type  = "PLAINTEXT"
-      value = "tabelog-task:"
+      value = "tabelog-task"
     }
     environment_variable {
       name  = "REPOSITORY_URI"
