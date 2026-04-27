@@ -5,7 +5,7 @@ resource "aws_ecs_cluster" "main" {
 
 # 2. タスク定義（設計図）
 resource "aws_ecs_task_definition" "main" {
-  family                   = "tabelog-task"
+  family                   = "Nagoyameshi-dev-app"
   cpu                      = "512"  # 0.5 vCPU
   memory                   = "1024" # 1024 MB
   network_mode             = "awsvpc"
@@ -57,7 +57,7 @@ resource "aws_ecs_task_definition" "main" {
       logConfiguration = {
         logDriver = "awslogs"
         options = {
-          "awslogs-group"         = "/ecs/tabelog-task"
+          "awslogs-group"         = "/ecs/Nagoyameshi-dev-app"
           "awslogs-region"        = "ap-northeast-1"
           "awslogs-stream-prefix" = "ecs"
         }
