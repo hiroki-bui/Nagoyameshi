@@ -36,7 +36,7 @@ resource "aws_codebuild_project" "tabelog_build" {
     environment_variable {
       name  = "CONTAINER_NAME"
       type  = "PLAINTEXT"
-      value = "tabelog-container"
+      value = "Nagoyameshi-dev-app"
     }
     environment_variable {
       name  = "ECS_CLUSTER_NAME"
@@ -59,7 +59,7 @@ resource "aws_codebuild_project" "tabelog_build" {
       value = "163053485036.dkr.ecr.ap-northeast-1.amazonaws.com/tabelog-repo"
     }
     environment_variable {
-  name  = "security_group_ID"
+      name  = "security_group_ID"
       type  = "PLAINTEXT"
       value = "sg-0e4c6830c5800979d"
     }
