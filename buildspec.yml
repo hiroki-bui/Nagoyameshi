@@ -3,27 +3,39 @@ version: 0.2
 phases:
   pre_build:
     commands:
+      # ECR へのログイン
+      # REPOSITORY_URI: CodeBuild の環境変数として設定すること
       - echo "[PRE_BUILD] Logging in to Amazon ECR..."
       - aws ecr get-login-password --region ap-northeast-1 | docker login --username AWS --password-stdin ${REPOSITORY_URI}
 
   build:
     commands:
+      # Dockerfile.deployment を使用して Docker イメージをビルド
+      # CONTAINER_NAME: CodeBuild の環境変数で設定すること
       - echo "[BUILD] Building Laravel Docker image..."
-      - docker build --no-cache -f Dockerfile.deployment -t ${REPOSITORY_URI}:latest .
-      - docker tag ${REPOSITORY_URI}:latest ${REPOSITORY_URI}:latest
+      - docker build --no-cache -f Dockerfile.deployment -t ${CONTAINER_NAME} .
+      - docker tag ${CONTAINER_NAME} ${REPOSITORY_URI}:latest
 
   post_build:
     commands:
+      # ビルドしたイメージを ECR にプッシュ
+      - echo "[POST_BUILD] Pushing image to ECR..."
+      - docker push ${REPOSITORY_URI}:latest
+
+      # マイグレーション専用タスクを ECS RunTask で実行
+      # MIGRATION_TASK_DEFINITION: マイグレーション専用の ECS タスク定義名を設定すること
+      # ECS_CLUSTER_NAME / SUBNET_ID_1 / SUBNET_ID_2 / SECURITY_GROUP_ID: CodeBuild の環境変数で設定すること
       - echo "[POST_BUILD] Running Laravel migration via ECS RunTask..."
       - |
         aws ecs run-task \
           --cluster ${ECS_CLUSTER_NAME} \
           --launch-type FARGATE \
           --task-definition ${MIGRATION_TASK_DEFINITION} \
-          --overrides '{"containerOverrides":[{"name":"Nagoyameshi-dev-app","command":["sh","-c","php artisan migrate --force && php artisan init:db"]}]}' \
           --network-configuration "awsvpcConfiguration={subnets=[${SUBNET_ID_1},${SUBNET_ID_2}],securityGroups=[${SECURITY_GROUP_ID}],assignPublicIp=DISABLED}" \
           --region ap-northeast-1
 
+      # ECSデプロイ用のイメージ定義ファイルを生成
+      # CodePipelineのDeployステージで使用される
       - echo "[POST_BUILD] Writing imagedefinitions.json for ECS Deploy..."
       - printf '[{"name":"%s","imageUri":"%s:latest"}]' "$CONTAINER_NAME" "$REPOSITORY_URI" > imagedefinitions.json
 artifacts:
