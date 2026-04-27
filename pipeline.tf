@@ -78,7 +78,7 @@ resource "aws_codebuild_project" "tabelog_build" {
       type  = "PLAINTEXT"
       value = "subnet-0b54f426254309417"
     }
-environment_variable {
+    environment_variable {
       name  = "SUBNET_ID_private-1c"
       type  = "PLAINTEXT"
       value = "subnet-080f41420a8fac79c"
