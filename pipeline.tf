@@ -36,7 +36,7 @@ resource "aws_codebuild_project" "tabelog_build" {
     environment_variable {
       name  = "CONTAINER_NAME"
       type  = "PLAINTEXT"
-      value = "Nagoyameshi-dev-app"
+      value = "tabelog-container"
     }
     environment_variable {
       name  = "ECS_CLUSTER_NAME"
@@ -51,7 +51,7 @@ resource "aws_codebuild_project" "tabelog_build" {
     environment_variable {
       name  = "MIGRATION_TASK_DEFINITION"
       type  = "PLAINTEXT"
-      value = "tabelog-task"
+      value = "arn:aws:ecs:ap-northeast-1:163053485036:task-definition/Nagoyameshi-dev-app:1"
     }
     environment_variable {
       name  = "REPOSITORY_URI"
