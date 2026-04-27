@@ -51,7 +51,7 @@ resource "aws_codebuild_project" "tabelog_build" {
     environment_variable {
       name  = "MIGRATION_TASK_DEFINITION"
       type  = "PLAINTEXT"
-      value = "arn:aws:ecs:ap-northeast-1:163053485036:task-definition/Nagoyameshi-dev-app:1"
+      value = "Nagoyameshi-dev-app:1"
     }
     environment_variable {
       name  = "REPOSITORY_URI"
