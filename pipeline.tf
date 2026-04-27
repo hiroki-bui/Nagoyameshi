@@ -41,32 +41,32 @@ resource "aws_codebuild_project" "tabelog_build" {
     environment_variable {
       name  = "ECS_CLUSTER_NAME"
       type  = "PLAINTEXT"
-      value = "Nagoyameshi-dev"
+      value = "tabelog-cluster"
     }
     environment_variable {
       name  = "ECS_SERVICE_NAME"
       type  = "PLAINTEXT"
-      value = "Nagoyameshi-dev-service"
+      value = "tabelog-service"
     }
     environment_variable {
       name  = "MIGRATION_TASK_DEFINITION"
       type  = "PLAINTEXT"
-      value = "arn:aws:ecs:ap-northeast-1:163053485036:task-definition/tabelog-task:6"
+      value = "tabelog-task:"
     }
     environment_variable {
       name  = "REPOSITORY_URI"
       type  = "PLAINTEXT"
-      value = "766462123570.dkr.ecr.us-east-1.amazonaws.com/nagoyameshi-dev"
+      value = "163053485036.dkr.ecr.ap-northeast-1.amazonaws.com/tabelog-repo"
     }
     environment_variable {
-      name  = "SECURITY_GROUP_ID"
+      name  = "tabelog-alb-sg"
       type  = "PLAINTEXT"
-      value = "sg-09d7f32baa49b035e"
+      value = "sg-0e4c6830c5800979d"
     }
     environment_variable {
-      name  = "SECURITY_GROUP_IDS"
+      name  = "tabelog-ecs-sg"
       type  = "PLAINTEXT"
-      value = "sg-09d7f32baa49b035e"
+      value = "sg-09a44710089c96f43"
     }
     environment_variable {
       name  = "SSM_ENV"
@@ -74,19 +74,25 @@ resource "aws_codebuild_project" "tabelog_build" {
       value = "dev"
     }
     environment_variable {
-      name  = "SUBNET_IDS"
+      name  = "SUBNET_ID_pubulic-1c"
       type  = "PLAINTEXT"
-      value = "subnet-04148eb8dfd1d1459,subnet-055d41247b1e6101b"
+      value = "subnet-0b54f426254309417"
+    }
+environment_variable {
+      name  = "SUBNET_ID_private-1c"
+      type  = "PLAINTEXT"
+      value = "subnet-080f41420a8fac79c"
+    }
+
+    environment_variable {
+      name  = "SUBNET_ID_public-1a"
+      type  = "PLAINTEXT"
+      value = "subnet-07ba752e84adb8baa"
     }
     environment_variable {
-      name  = "SUBNET_ID_1"
+      name  = "SUBNET_ID_private-1a"
       type  = "PLAINTEXT"
-      value = "subnet-04148eb8dfd1d1459"
-    }
-    environment_variable {
-      name  = "SUBNET_ID_2"
-      type  = "PLAINTEXT"
-      value = "subnet-055d41247b1e6101b"
+      value = "subnet-0eb68c33914eb1c37"
     }
   }
 
