@@ -59,12 +59,12 @@ resource "aws_codebuild_project" "tabelog_build" {
       value = "163053485036.dkr.ecr.ap-northeast-1.amazonaws.com/tabelog-repo"
     }
     environment_variable {
-      name  = "tabelog-alb-sg"
+  name  = "security_group_ID"
       type  = "PLAINTEXT"
       value = "sg-0e4c6830c5800979d"
     }
     environment_variable {
-      name  = "tabelog-ecs-sg"
+      name  = "security_group_IDS"
       type  = "PLAINTEXT"
       value = "sg-09a44710089c96f43"
     }
@@ -74,25 +74,14 @@ resource "aws_codebuild_project" "tabelog_build" {
       value = "dev"
     }
     environment_variable {
-      name  = "SUBNET_ID_pubulic-1c"
+      name  = "SUBNET_ID_1"
       type  = "PLAINTEXT"
       value = "subnet-0b54f426254309417"
     }
     environment_variable {
-      name  = "SUBNET_ID_private-1c"
-      type  = "PLAINTEXT"
-      value = "subnet-080f41420a8fac79c"
-    }
-
-    environment_variable {
-      name  = "SUBNET_ID_public-1a"
+      name  = "SUBNET_ID_2"
       type  = "PLAINTEXT"
       value = "subnet-07ba752e84adb8baa"
-    }
-    environment_variable {
-      name  = "SUBNET_ID_private-1a"
-      type  = "PLAINTEXT"
-      value = "subnet-0eb68c33914eb1c37"
     }
   }
 
