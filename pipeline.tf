@@ -51,7 +51,7 @@ resource "aws_codebuild_project" "tabelog_build" {
     environment_variable {
       name  = "MIGRATION_TASK_DEFINITION"
       type  = "PLAINTEXT"
-      value = "arn:aws:codeconnections:ap-northeast-1:163053485036:connection/70224714-2992-4893-a7ae-f3b656b7f9af"
+      value = "arn:aws:ecs:ap-northeast-1:163053485036:task-definition/tabelog-task:6"
     }
     environment_variable {
       name  = "REPOSITORY_URI"
