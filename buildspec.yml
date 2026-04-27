@@ -4,7 +4,7 @@ phases:
   pre_build:
     commands:
       - echo "[PRE_BUILD] Logging in to Amazon ECR..."
-      - aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${REPOSITORY_URI}
+      - aws ecr get-login-password --region ap-northeast-1 | docker login --username AWS --password-stdin ${REPOSITORY_URI}
 
   build:
     commands:
@@ -22,7 +22,7 @@ phases:
           --task-definition ${MIGRATION_TASK_DEFINITION} \
           --overrides '{"containerOverrides":[{"name":"tabelog-container","command":["sh","-c","php artisan migrate --force && php artisan init:db"]}]}' \
           --network-configuration "awsvpcConfiguration={subnets=[${SUBNET_ID_1},${SUBNET_ID_2}],securityGroups=[${SECURITY_GROUP_ID}],assignPublicIp=DISABLED}" \
-          --region us-east-1
+          --region ap-northeast-1
 
       - echo "[POST_BUILD] Writing imagedefinitions.json for ECS Deploy..."
       - printf '[{"name":"%s","imageUri":"%s:latest"}]' "$CONTAINER_NAME" "$REPOSITORY_URI" > imagedefinitions.json
