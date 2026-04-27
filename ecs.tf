@@ -14,7 +14,7 @@ resource "aws_ecs_task_definition" "main" {
 
   container_definitions = jsonencode([
     {
-      name      = "tabelog-container"
+      name      = "Nagoyameshi-dev-app"
       image     = "163053485036.dkr.ecr.ap-northeast-1.amazonaws.com/tabelog-repo:latest"
       essential = true
       environment = [
@@ -85,7 +85,7 @@ resource "aws_ecs_service" "main" {
 
   load_balancer {
     target_group_arn = aws_lb_target_group.main.arn
-    container_name   = "tabelog-container"
+    container_name   = "Nagoyameshi-dev-app"
     container_port   = 80
   }
 }

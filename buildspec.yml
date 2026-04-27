@@ -20,7 +20,7 @@ phases:
           --cluster ${ECS_CLUSTER_NAME} \
           --launch-type FARGATE \
           --task-definition ${MIGRATION_TASK_DEFINITION} \
-          --overrides '{"containerOverrides":[{"name":"tabelog-container","command":["sh","-c","php artisan migrate --force && php artisan init:db"]}]}' \
+          --overrides '{"containerOverrides":[{"name":"Nagoyameshi-dev-app","command":["sh","-c","php artisan migrate --force && php artisan init:db"]}]}' \
           --network-configuration "awsvpcConfiguration={subnets=[${SUBNET_ID_1},${SUBNET_ID_2}],securityGroups=[${SECURITY_GROUP_ID}],assignPublicIp=DISABLED}" \
           --region ap-northeast-1
 
