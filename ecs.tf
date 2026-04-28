@@ -46,6 +46,12 @@ resource "aws_ecs_task_definition" "main" {
           name  = "DB_PASSWORD"
           value = "Namu0326"
         },
+        {
+          "name" : "LOG_CHANNEL",
+          "value" : "stderr"
+        }
+
+
         # ... その他デバッグ用設定 ...
       ]
       portMappings = [
