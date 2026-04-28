@@ -21,6 +21,7 @@ resource "aws_db_instance" "main" {
   skip_final_snapshot    = true # 削除時にバックアップを取らない（学習用）
   vpc_security_group_ids = [aws_security_group.db_sg.id]
   db_subnet_group_name   = aws_db_subnet_group.main.name
+  multi_az               = true # 可用性向上のためマルチAZ構成にする
 
   tags = {
     Name = "laravel_nagoyameshi"
