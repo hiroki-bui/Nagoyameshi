@@ -36,7 +36,7 @@ resource "aws_ecs_task_definition" "main" {
         },
         {
           name  = "DB_DATABASE"
-          value = "tabelog_db"
+          value = "laravel_nagoyameshi" # RDSのdb_nameと一致させる
         },
         {
           name  = "DB_USERNAME"
