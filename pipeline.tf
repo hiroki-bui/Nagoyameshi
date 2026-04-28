@@ -59,9 +59,9 @@ resource "aws_codebuild_project" "tabelog_build" {
       value = "163053485036.dkr.ecr.ap-northeast-1.amazonaws.com/tabelog-repo"
     }
     environment_variable {
-      name  = "security_group_ID"
+      name  = "SECURITY_GROUP_ID"
       type  = "PLAINTEXT"
-      value = "sg-0e4c6830c5800979d"
+      value = "sg-09a44710089c96f43"
     }
     environment_variable {
       name  = "security_group_IDS"
