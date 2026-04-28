@@ -21,7 +21,7 @@ phases:
           --launch-type FARGATE \
           --task-definition ${MIGRATION_TASK_DEFINITION} \
           --overrides '{"containerOverrides":[{"name":"Nagoyameshi-dev-app","command":["sh","-c","php artisan migrate --force && php artisan init:db"]}]}' \
-          --network-configuration "awsvpcConfiguration={subnets=[${SUBNET_ID_1},${SUBNET_ID_2}],securityGroups=[${SECURITY_GROUP_ID}],assignPublicIp=DISABLED}" \
+          --network-configuration "awsvpcConfiguration={subnets=[${SUBNET_ID_1},${SUBNET_ID_2}],securityGroups=[${SECURITY_GROUP_ID}],assignPublicIp=ENABLED}" \
           --region ap-northeast-1
 
       - echo "[POST_BUILD] Writing imagedefinitions.json for ECS Deploy..."
