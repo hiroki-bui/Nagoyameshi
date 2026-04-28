@@ -14,7 +14,7 @@ resource "aws_db_instance" "main" {
   engine                 = "mysql"
   engine_version         = "8.0"
   instance_class         = "db.t3.micro" # 無料枠対象のサイズ
-  db_name                = "tabelog_db"  # データベース名
+  db_name                = "laravel_nagoyameshi"  # データベース名
   username               = "admin"
   password               = "Namu0326"
   parameter_group_name   = "default.mysql8.0"
@@ -23,6 +23,6 @@ resource "aws_db_instance" "main" {
   db_subnet_group_name   = aws_db_subnet_group.main.name
 
   tags = {
-    Name = "tabelog-db"
+    Name = "laravel_nagoyameshi"
   }
 }
